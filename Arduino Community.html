@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arduino Community</title>
+
+<link rel="icon" type="image/png" href="Images/Website-Guide.png">
+<link rel="stylesheet" href="css/community.css">
+</head>
+
+<body>
+
+<header class="topbar">
+  <h1>Arduino Community</h1>
+  <p>Projects • Help • Code • Hardware</p>
+</header>
+
+<nav class="navbar">
+  <a href="Arduino%20Guide.html#home">🏠 Home</a>
+  <a href="Feedback.html#about">📩 Contact</a>
+
+  <input type="text" id="searchBox" placeholder="Search posts...">
+
+  <button id="openCreatorBtn" class="create-post-btn">
+    + Create Post
+  </button>
+</nav>
+
+<!-- RIGHT DROPDOWN -->
+<div class="sort-panel">
+  <select id="sortPosts">
+    <option value="latest">Newest</option>
+    <option value="oldest">Oldest</option>
+    <option value="liked">Most Liked</option>
+    <option value="favorites">Favorites</option>
+  </select>
+</div>
+
+<!-- WINDOW -->
+<div id="postWindow" class="window hidden">
+
+  <div class="window-header" id="windowDrag">
+    <span>Create Post</span>
+
+    <div class="window-controls">
+      <button id="minimizeWindow">—</button>
+      <button id="closeWindow">✕</button>
+    </div>
+  </div>
+
+  <div class="window-content" id="windowContent">
+
+    <form id="uploadForm">
+
+      <input type="text" id="username" placeholder="Your Name" required>
+
+      <input type="text" id="postTitle" placeholder="Post Title" required>
+
+      <textarea id="postContent" rows="5"
+      placeholder="Write your post..."></textarea>
+
+      <textarea id="postCode" rows="6"
+      placeholder="Arduino code..."></textarea>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        Submit Post
+      </button>
+
+    </form>
+
+  </div>
+</div>
+
+<main>
+
+  <div id="communityPosts"></div>
+
+  <div class="load-wrap">
+    <button id="loadMoreBtn">Load More</button>
+  </div>
+
+</main>
+
+<!-- POPUP -->
+<div id="popup" class="popup"></div>
+<!-- CONFIRM -->
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmText">Continue?</p>
+
+    <div class="confirm-actions">
+      <button id="confirmYes">Yes</button>
+      <button id="confirmNo">Cancel</button>
+    </div>
+
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyCVq2PWrDMXTsG4GdceE4tUvTYeRYsul1Q",
+  authDomain: "arduino-guideg.firebaseapp.com",
+  databaseURL: "https://arduino-guideg-default-rtdb.europe-west1.firebasedatabase.app/",
+  projectId: "arduino-guideg",
+  storageBucket: "arduino-guideg.appspot.com",
+  messagingSenderId: "146740789054",
+  appId: "1:146740789054:web:069f11c6f6aa314b5af66f"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+</script>
+
+<script src="js/community.js"></script>
+<!-- EDIT WINDOW -->
+<div id="editWindow" class="window hidden">
+
+  <div class="window-header" id="editWindowDrag">
+    <span id="editWindowTitle">Edit</span>
+
+    <div class="window-controls">
+      <button id="closeEditWindow">✕</button>
+    </div>
+  </div>
+
+  <div class="window-content">
+
+    <input type="text" id="editTitle" placeholder="Edit title...">
+
+    <textarea id="editContent"
+    rows="8"
+    placeholder="Edit content..."></textarea>
+
+    <div class="edit-actions">
+      <button id="saveEditBtn" class="submit-btn">
+        Save Changes
+      </button>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
+
+
