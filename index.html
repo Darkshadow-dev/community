@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ef">
+  <meta name="description" content="A thoughtful corner of the internet for sharing what you're making, learning, and wondering about.">
+  <title>Commonroom — good company for curious people</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="Commonroom home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        <span>commonroom</span>
+      </a>
+      <div class="top-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 4.3 4.3"></path></svg>
+        <input id="search-input" type="search" placeholder="Search conversations, people, spaces…" aria-label="Search the community">
+        <kbd>⌘ K</kbd>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button notification-button" id="notifications-button" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg><i></i>
+        </button>
+        <button class="profile-chip" id="profile-button" aria-label="Your profile"><span class="avatar avatar-maya">MC</span><span class="profile-name">Maya</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg></button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="left-rail" aria-label="Main navigation">
+        <div class="rail-section">
+          <p class="rail-label">YOUR SPACE</p>
+          <button class="nav-item active" data-view="home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5h-6v-7h-5v7h-6z"></path></svg></span>Home<span class="nav-dot"></span></button>
+          <button class="nav-item" data-view="saved"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"></path></svg></span>Saved</button>
+          <button class="nav-item" data-view="my-posts"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14M5 9h14M5 14h8M5 19h5"></path></svg></span>My posts</button>
+        </div>
+
+        <div class="rail-section spaces-section">
+          <div class="rail-heading"><p class="rail-label">YOUR SPACES</p><button class="tiny-add" id="add-space-button" aria-label="Explore spaces">+</button></div>
+          <button class="space-link selected" data-space="All spaces"><span class="space-emoji">✳</span>All spaces</button>
+          <button class="space-link" data-space="Design & making"><span class="space-emoji peach">◒</span>Design &amp; making</button>
+          <button class="space-link" data-space="Slow living"><span class="space-emoji mint">☘</span>Slow living</button>
+          <button class="space-link" data-space="Good questions"><span class="space-emoji lilac">✦</span>Good questions</button>
+          <button class="space-link" data-space="Tiny victories"><span class="space-emoji yellow">↗</span>Tiny victories</button>
+        </div>
+
+        <div class="rail-bottom">
+          <div class="invite-card">
+            <span class="invite-spark">✳</span>
+            <strong>Good things grow<br>when shared.</strong>
+            <p>Bring a thoughtful friend into the room.</p>
+            <button id="invite-button">Invite a friend <span>↗</span></button>
+          </div>
+          <button class="nav-item settings-link" id="settings-button"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="m19.4 15 .1.1 1.4 1.1-1.5 2.6-1.7-.7a8 8 0 0 1-1.4.8l-.3 1.8h-3l-.3-1.8a8 8 0 0 1-1.4-.8l-1.7.7-1.5-2.6 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.5-2.6 1.7.7a8 8 0 0 1 1.4-.8l.3-1.8h3l.3 1.8a8 8 0 0 1 1.4.8l1.7-.7 1.5 2.6-1.4 1.1a7 7 0 0 1 0 1.8z" transform="translate(-1 -1)"></path></svg></span>Settings</button>
+          <p class="rail-footer">A little more human, every day. <span>♥</span></p>
+        </div>
+      </aside>
+
+      <main class="feed-column" id="home">
+        <div class="greeting-row"><div><p class="eyebrow" id="today-label">YOUR MONDAY MOMENT</p><h1>A good day to <em>show up.</em></h1></div><div class="weather-note"><span class="sun-icon">☼</span><span>Room for a little<br><b>curiosity today</b></span></div></div>
+
+        <section class="composer-card" aria-label="Create a post">
+          <div class="composer-top"><span class="avatar avatar-maya">MC</span><button class="composer-prompt" id="open-composer">What’s on your mind, Maya?</button></div>
+          <div class="composer-bottom"><div class="composer-hints"><span class="hint-icon image-hint">▧</span><span>Share a photo</span><span class="hint-separator">·</span><span class="hint-icon">◷</span><span>Start a discussion</span></div><button class="primary-button" id="compose-button"><span>＋</span> Create post</button></div>
+        </section>
+
+        <div class="feed-toolbar"><div class="feed-tabs" role="tablist" aria-label="Feed view"><button class="feed-tab active" data-feed="for-you" role="tab" aria-selected="true">For you</button><button class="feed-tab" data-feed="following" role="tab" aria-selected="false">Following <span class="new-pill">NEW</span></button></div><label class="sort-control"><span>Sort by</span><select id="sort-select" aria-label="Sort posts"><option value="recent">Most recent</option><option value="popular">Most loved</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg></label></div>
+        <div class="active-filter" id="active-filter" hidden><span id="filter-label"></span><button id="clear-filter" aria-label="Clear filter">×</button></div>
+        <section class="post-list" id="post-list" aria-live="polite"></section>
+        <div class="empty-state" id="empty-state" hidden><div class="empty-art">☁</div><h2>No conversations here yet</h2><p>Start one. Someone else is probably wondering the same thing.</p><button class="primary-button" id="empty-create">＋ Start a conversation</button></div>
+        <button class="load-more" id="load-more">You’re all caught up <span>✳</span></button>
+      </main>
+
+      <aside class="right-rail" aria-label="Community highlights">
+        <section class="welcome-card"><div class="welcome-top"><span>✳</span><span class="welcome-kicker">A NOTE FROM THE ROOM</span></div><h2>Small thoughts.<br><em>Big connections.</em></h2><p>We’re better when we make space for each other. Thanks for being here.</p><div class="welcome-signature"><span class="avatar avatar-jules">JL</span><span><b>Jules</b><small>Community host</small></span><span class="signature-heart">♥</span></div></section>
+
+        <section class="people-section"><div class="side-heading"><h3>People to know</h3><button class="text-link" id="see-people">See all</button></div><div id="people-list"></div></section>
+
+        <section class="trending-section"><div class="side-heading"><h3>Room for thought</h3><button class="more-dots" aria-label="More topics">···</button></div><p class="side-caption">Conversations picking up today</p><div class="trending-list" id="trending-list"></div></section>
+
+        <section class="community-stats"><div class="stats-art"><span>✳</span><span>✦</span><span>✿</span></div><div><b id="member-count">2,481</b><span>curious people<br>and counting</span></div><p>You make this place feel like somewhere.</p></section>
+        <footer class="site-footer"><a href="#about">About</a><a href="#guidelines">Guidelines</a><a href="#privacy">Privacy</a><span>© 2026 Commonroom</span></footer>
+      </aside>
+    </div>
+  </div>
+
+  <dialog class="composer-dialog" id="composer-dialog" aria-labelledby="dialog-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close"></button></form>
+    <section class="dialog-panel">
+      <div class="dialog-header"><div><p class="eyebrow">MAKE A LITTLE ROOM</p><h2 id="dialog-title">Start a conversation</h2></div><button class="close-dialog" id="close-composer" aria-label="Close">×</button></div>
+      <form id="post-form"><label class="field-label" for="post-title">Give it a title</label><input id="post-title" class="text-field title-field" maxlength="100" required placeholder="A question, a thought, a small win…"><label class="field-label" for="post-body">Add a little context</label><textarea id="post-body" class="text-field body-field" maxlength="800" required placeholder="The good stuff starts when you share what’s on your mind."></textarea><div class="form-meta"><label class="select-label" for="post-space">Choose a space</label><select id="post-space"><option>Good questions</option><option>Design &amp; making</option><option>Slow living</option><option>Tiny victories</option></select><span id="character-count">0 / 800</span></div><div class="dialog-actions"><span class="dialog-note"><span>✳</span> Be kind. Stay curious.</span><button class="primary-button" type="submit">Share with the room <span>↗</span></button></div></form>
+    </section>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

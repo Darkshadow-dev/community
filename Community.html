@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community</title>
+<link rel="icon" type="image/png" href="Images/Website-Guide.png">
+<link rel="stylesheet" href="css/community.css">
+</head>
+
+<body>
+
+<header class="topbar">
+<h1>Community</h1>
+<p>Share projects, ask questions, collaborate and build together.</p>
+</header>
+
+<nav class="navbar">
+<a href=".html#home">🏠 Home</a>
+
+<input
+type="text"
+id="searchBox"
+placeholder="Search community posts..."
+>
+
+<button id="openCreatorBtn" class="create-post-btn">
++ Create Post
+</button>
+</nav>
+
+<section class="stats-grid">
+
+<div class="stat-card">
+<div class="stat-number" id="postCount">0</div>
+<div class="stat-label">Posts</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-number" id="userCount">0</div>
+<div class="stat-label">Members</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-number" id="projectCount">0</div>
+<div class="stat-label">Projects</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-number" id="commentCount">0</div>
+<div class="stat-label">Comments</div>
+</div>
+
+</section>
+
+<div class="sort-panel">
+
+<select id="categoryFilter">
+<option value="all">All Categories</option>
+<option value="project">Projects</option>
+<option value="question">Questions</option>
+<option value="help">Help</option>
+<option value="release">Releases</option>
+</select>
+
+<select id="sortPosts">
+<option value="latest">Newest</option>
+<option value="oldest">Oldest</option>
+<option value="liked">Most Liked</option>
+<option value="disliked">Most Disliked</option>
+<option value="favorites">Favorites</option>
+</select>
+
+</div>
+
+
+<!-- CREATE POST WINDOW -->
+
+<div id="postWindow" class="window hidden">
+
+<div class="window-header" id="windowDrag">
+
+<span>Create Community Post</span>
+
+<div class="window-controls">
+
+<button type="button" id="minimizeWindow">—</button>
+
+<button type="button" id="closeWindow">✕</button>
+
+</div>
+
+</div>
+
+
+<div class="window-content" id="windowContent">
+
+<form id="uploadForm">
+
+<div class="form-group">
+
+<label>Username</label>
+
+<input
+type="text"
+id="username"
+placeholder="Your Name"
+required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Title</label>
+
+<input
+type="text"
+id="postTitle"
+placeholder="Post title..."
+required
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Category</label>
+
+<select id="postCategory">
+
+<option value="project">Project</option>
+<option value="question">Question</option>
+<option value="help">Help</option>
+<option value="release">Release</option>
+
+</select>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Content</label>
+
+<textarea
+id="postContent"
+rows="6"
+placeholder="Write your community post..."
+></textarea>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Code / Extra Information</label>
+
+<textarea
+id="postCode"
+rows="7"
+placeholder="Add code, notes, links or extra information..."
+></textarea>
+
+</div>
+
+
+<button
+type="submit"
+class="submit-btn"
+id="submitBtn"
+>
+Create Post
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+
+<!-- EDIT POST WINDOW -->
+
+<div id="editWindow" class="window hidden">
+
+<div class="window-header" id="editWindowDrag">
+
+<span>Edit Post</span>
+
+<div class="window-controls">
+
+<button
+type="button"
+id="closeEditWindow"
+>
+✕
+</button>
+
+</div>
+
+</div>
+
+
+<div class="window-content">
+
+<div class="form-group">
+
+<label>Title</label>
+
+<input
+type="text"
+id="editTitle"
+placeholder="Edit title..."
+>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Content</label>
+
+<textarea
+id="editContent"
+rows="8"
+placeholder="Edit content..."
+></textarea>
+
+</div>
+
+
+<div class="form-group">
+
+<label>Extra Information</label>
+
+<textarea
+id="editCode"
+rows="6"
+placeholder="Edit code or extra information..."
+></textarea>
+
+</div>
+
+
+<button
+type="button"
+id="saveEditBtn"
+class="submit-btn"
+>
+Save Changes
+</button>
+
+</div>
+
+</div>
+
+
+<main>
+
+<h2 class="section-title">
+Community Posts
+</h2>
+
+<div
+id="communityPosts"
+class="posts-container"
+></div>
+
+<div class="load-wrap">
+
+<button id="loadMoreBtn">
+Load More
+</button>
+
+</div>
+
+</main>
+
+
+<div id="popup" class="popup"></div>
+
+
+<!-- CONFIRM -->
+
+<div
+id="confirmOverlay"
+class="confirm-overlay hidden"
+>
+
+<div class="confirm-box">
+
+<h3 id="confirmTitle">
+Confirm
+</h3>
+
+<p id="confirmText">
+Continue?
+</p>
+
+<div class="confirm-actions">
+
+<button
+id="confirmYes"
+class="confirm-yes"
+type="button"
+>
+Yes
+</button>
+
+<button
+id="confirmNo"
+class="confirm-no"
+type="button"
+>
+Cancel
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+
+<script>
+
+var firebaseConfig = {
+
+apiKey: "AIzaSyCVq2PWrDMXTsG4GdceE4tUvTYeRYsul1Q",
+
+authDomain: "arduino-guideg.firebaseapp.com",
+
+databaseURL: "https://arduino-guideg-default-rtdb.europe-west1.firebasedatabase.app/",
+
+projectId: "arduino-guideg",
+
+storageBucket: "arduino-guideg.appspot.com",
+
+messagingSenderId: "146740789054",
+
+appId: "1:146740789054:web:069f11c6f6aa314b5af66f"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+</script>
+
+
+<script src="js/community.js?v=2"></script>
+
+</body>
+</html>
