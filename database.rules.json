@@ -2,43 +2,57 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "communityConfig": {
+      ".read": "auth != null",
+      "adminUid": {
+        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('usernames').child('67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67').child('uid').val() === auth.uid) || (data.exists() && data.val() === auth.uid && newData.val() === data.val()))",
+        ".validate": "newData.isString() && newData.val() === auth.uid"
+      }
+    },
+    "usernames": {
+      ".read": "auth != null",
+      "$usernameKey": {
+        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && ($usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67' || (auth.token.email != null && newData.child('displayName').val() === 'Ⓖ THE Creator Ⓖ' && !root.child('communityConfig').child('adminUid').exists()))) || (data.child('uid').val() === auth.uid && newData.exists() && newData.child('uid').val() === auth.uid) || (data.child('uid').val() === auth.uid && !newData.exists() && $usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67'))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['uid', 'displayName', 'createdAt']) && newData.child('uid').isString() && newData.child('uid').val() === auth.uid && newData.child('displayName').isString() && newData.child('createdAt').isNumber())"
+      }
+    },
     "posts": {
       ".read": "auth != null",
       "$postId": {
-        ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid))",
+        ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid))",
         "title": {
-          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
         },
         "content": {
-          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
         },
         "code": {
-          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
         },
         "edited": {
-          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
         },
         "editedAt": {
-          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
         },
         "likes": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
           }
         },
         "dislikes": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
           }
         },
         "favorites": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
           }
         },
         "comments": {
           "$commentId": {
-            ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+            ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
           }
         }
       }
@@ -51,10 +65,10 @@
       }
     },
     "reports": {
-      ".read": "auth != null && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'",
+      ".read": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))",
       "$reportId": {
-        ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))",
-        ".validate": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (newData.hasChildren(['postId', 'reporterId', 'timestamp', 'status']) && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))"
+        ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))",
+        ".validate": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (newData.hasChildren(['postId', 'reporterId', 'timestamp', 'status']) && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))"
       }
     }
   }

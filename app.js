@@ -1,7 +1,9 @@
 (() => {
   const db = window.communityDb;
   const auth = window.communityAuth;
-  const ADMIN_UID = "HlLj9hzon7bs2aEUpuOn97HWl9v1";
+  const LEGACY_ADMIN_UID = "HlLj9hzon7bs2aEUpuOn97HWl9v1";
+  const CREATOR_NAME = "Ⓖ THE Creator Ⓖ";
+  const CREATOR_USERNAME_KEY = "67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67";
   const spaces = [
     { name: "Design & making", category: "project", icon: "◒", tone: "peach" },
     { name: "Slow living", category: "help", icon: "☘", tone: "mint" },
@@ -21,10 +23,19 @@
     "auth/invalid-credential": "That email and password don’t match.",
     "auth/credential-already-in-use": "That email already belongs to another account. Sign in to it instead.",
     "auth/operation-not-allowed": "Email and password accounts are not enabled for this Firebase project yet.",
+    "auth/admin-restricted-operation": "Firebase blocked signup for this project. Check that Email/Password is enabled in arduino-guideg Authentication settings.",
+    "auth/invalid-api-key": "Firebase rejected this app’s API key. Check the Firebase web app configuration for arduino-guideg.",
+    "auth/unauthorized-domain": "This site’s domain is not authorized in Firebase Authentication. Add localhost or your deployed domain under Authentication → Settings → Authorized domains, then reopen the site there.",
+    "auth/network-request-failed": "Firebase could not connect. Check your internet connection and try again.",
     "auth/too-many-requests": "Too many attempts. Wait a little and try again.",
-    "database/permission-denied": "Firebase blocked this change. Check the project’s database rules."
+    "database/permission-denied": "Firebase denied this change. Import the updated database.rules.json in Realtime Database → Rules.",
+    "community/name-already-in-use": "That display name is already taken. Choose a different name.",
+    "community/creator-name-exact": "Use the exact creator name Ⓖ THE Creator Ⓖ to claim the admin account.",
+    "community/admin-already-claimed": "The creator account has already been claimed. Contact the current admin."
   };
   let currentUser = null;
+  let usernameReady = false;
+  let registrationInProgress = false;
   let authReady = false;
   let firstAuthEvent = true;
   let anonymousLoginPromise = null;
@@ -33,6 +44,8 @@
   let postsRef = null;
   let membersRef = null;
   let reportsRef = null;
+  let adminConfigRef = null;
+  let adminUid = null;
   let allPosts = [];
   let members = {};
   let reports = {};
@@ -178,11 +191,80 @@
   }
 
   function isAdmin() {
-    return Boolean(currentUser && currentUser.uid === ADMIN_UID);
+    return Boolean(currentUser && (currentUser.uid === adminUid || (!adminUid && currentUser.uid === LEGACY_ADMIN_UID)));
+  }
+
+  function normalizedName(name) {
+    return String(name || "").normalize("NFKC").trim().replace(/\s+/gu, " ").toLowerCase();
+  }
+
+  function usernameKey(name) {
+    return Array.from(normalizedName(name), character => character.codePointAt(0).toString(16)).join("-");
+  }
+
+  function createCommunityError(code) {
+    return Object.assign(new Error(authErrors[code] || "Unable to complete this account change."), { code });
+  }
+
+  async function reserveUsername(name, user) {
+    const key = usernameKey(name);
+    if (!key || !user) throw createCommunityError("community/name-already-in-use");
+    if (key === CREATOR_USERNAME_KEY && name !== CREATOR_NAME) throw createCommunityError("community/creator-name-exact");
+    if (key === CREATOR_USERNAME_KEY) {
+      const adminSnapshot = await db.ref("communityConfig/adminUid").once("value");
+      if (adminSnapshot.exists() && adminSnapshot.val() !== user.uid) throw createCommunityError("community/admin-already-claimed");
+    }
+    let createdByThisCall = false;
+    const result = await db.ref(`usernames/${key}`).transaction(existing => {
+      if (!existing) {
+        createdByThisCall = true;
+        return { uid: user.uid, displayName: name, createdAt: Date.now() };
+      }
+      createdByThisCall = false;
+      if (existing.uid !== user.uid) return;
+      return { ...existing, displayName: name, updatedAt: Date.now() };
+    });
+    if (!result.committed) throw createCommunityError("community/name-already-in-use");
+    return { key, created: createdByThisCall };
+  }
+
+  async function releaseUsername(key, uid) {
+    if (!key || !uid || key === CREATOR_USERNAME_KEY) return;
+    await db.ref(`usernames/${key}`).transaction(existing => existing?.uid === uid ? null : undefined);
+  }
+
+  async function claimCreatorAdmin(user, key) {
+    if (key !== CREATOR_USERNAME_KEY) return;
+    const ref = db.ref("communityConfig/adminUid");
+    const current = await ref.once("value");
+    if (current.exists() && current.val() !== user.uid) throw createCommunityError("community/admin-already-claimed");
+    const result = await ref.transaction(existing => existing || user.uid);
+    if (!result.committed || result.snapshot.val() !== user.uid) throw createCommunityError("community/admin-already-claimed");
+  }
+
+  async function verifyAccountUsername(user) {
+    if (!user || user.isAnonymous) return;
+    try {
+      const name = displayName(user);
+      const reservation = await reserveUsername(name, user);
+      await claimCreatorAdmin(user, reservation.key);
+      usernameReady = true;
+      await saveMemberProfile(user, name);
+      updateProfileUI();
+    } catch (error) {
+      usernameReady = false;
+      updateProfileUI();
+      showToast(`${authErrorMessage(error)} Open your account settings to choose another display name.`);
+    }
   }
 
   function requireAccount(action) {
-    if (canWrite()) return true;
+    if (canWrite() && usernameReady) return true;
+    if (canWrite()) {
+      openAccountDialog("account");
+      showMessage("profile-message", "Choose a display name that is not already in use before joining in.", true);
+      return false;
+    }
     openAccountDialog("signup");
     $("#auth-intro").textContent = `Create a free account to ${action}.`;
     return false;
@@ -254,8 +336,9 @@
     $("#auth-panel").hidden = false;
     $("#account-panel").hidden = true;
     $("#account-dialog-title").textContent = create ? "Make yourself at home" : "Welcome back";
-    $("#auth-intro").textContent = create ? "A name and an email are all you need to join in." : "Good to see you again. Come on in.";
+    $("#auth-intro").textContent = create ? "Choose a unique name and add your email and password to join in." : "Good to see you again. Come on in.";
     $(".auth-name-field").hidden = !create;
+    $("#auth-name-hint").hidden = !create;
     $(".auth-confirm-field").hidden = !create;
     $("#auth-password").autocomplete = create ? "new-password" : "current-password";
     $("#auth-submit").textContent = create ? "Create my account" : "Sign in";
@@ -314,7 +397,7 @@
     $("#composer-avatar").className = `avatar ${signedIn ? userAvatar() : "avatar-maya"}`;
     $("#profile-button").setAttribute("aria-label", signedIn ? `Your account, ${name}` : "Create an account or sign in");
     $("#profile-button").title = signedIn ? "Your account" : "Create an account or sign in";
-    if (signedIn) saveMemberProfile(currentUser, name);
+    if (signedIn && usernameReady) saveMemberProfile(currentUser, name);
     renderPosts();
     renderPeople();
     renderSpaces();
@@ -352,6 +435,16 @@
       renderPeople();
       updateStats();
     });
+  }
+
+  function attachAdminConfig() {
+    if (adminConfigRef) adminConfigRef.off("value");
+    adminConfigRef = db.ref("communityConfig/adminUid");
+    adminConfigRef.on("value", snapshot => {
+      adminUid = snapshot.val() || null;
+      updateProfileUI();
+      attachReports();
+    }, error => showToast(authErrorMessage(error)));
   }
 
   function attachReports() {
@@ -435,7 +528,7 @@
 
   function renderPost(post) {
     const own = post.author.id === currentUser?.uid;
-    const admin = currentUser?.uid === ADMIN_UID;
+    const admin = isAdmin();
     const canEdit = own || admin;
     const comments = post.comments || [];
     return `<article class="post-card" data-post-id="${escapeHTML(post.id)}">
@@ -451,7 +544,7 @@
 
   function renderComment(comment) {
     const own = comment.userId === currentUser?.uid;
-    const admin = currentUser?.uid === ADMIN_UID;
+    const admin = isAdmin();
     return `<div class="comment" data-comment-id="${escapeHTML(comment.id)}"><span class="avatar ${escapeHTML(comment.author.avatar)}">${escapeHTML(comment.author.initials)}</span><div class="comment-content"><div class="comment-head"><strong>${escapeHTML(comment.author.name)}</strong><time>${escapeHTML(comment.time)}${comment.edited ? " · edited" : ""}</time></div><p>${escapeHTML(comment.text)}</p>${own || admin ? `<div class="comment-controls"><button data-action="edit-comment">Edit</button><button data-action="delete-comment">Delete</button></div>` : ""}</div></div>`;
   }
 
@@ -725,32 +818,89 @@
     const button = $("#auth-submit");
     button.disabled = true;
     button.textContent = authMode === "signup" ? "Creating your account…" : "Signing in…";
+    let signupSucceeded = false;
+    let signupAccountRemoved = false;
+    if (authMode === "signup") registrationInProgress = true;
     try {
       if (authMode === "signup") {
-        const name = $("#auth-name").value.trim();
+        const name = $("#auth-name").value.trim().replace(/\s+/gu, " ");
         const confirmation = $("#auth-confirm").value;
-        if (name.length < 2) throw new Error("Please enter a name of at least 2 characters.");
+        if (Array.from(name).length < 2) throw new Error("Please enter a name of at least 2 characters.");
+        if (Array.from(name).length > 40) throw new Error("Please keep your name to 40 characters or fewer.");
         if (password.length < 6) throw Object.assign(new Error(), { code: "auth/weak-password" });
         if (password !== confirmation) throw new Error("Those passwords don’t match yet.");
         let result;
+        let reservation;
         if (auth.currentUser?.isAnonymous) {
+          const guest = auth.currentUser;
           const credential = firebase.auth.EmailAuthProvider.credential(email, password);
-          result = await auth.currentUser.linkWithCredential(credential);
+          if (usernameKey(name) === CREATOR_USERNAME_KEY) {
+            result = await guest.linkWithCredential(credential);
+            await result.user.getIdToken(true);
+            reservation = await reserveUsername(name, result.user);
+          } else {
+            reservation = await reserveUsername(name, guest);
+            try {
+              result = await guest.linkWithCredential(credential);
+            } catch (error) {
+              if (reservation.created) await releaseUsername(reservation.key, guest.uid).catch(() => {});
+              throw error;
+            }
+          }
         } else {
           result = await auth.createUserWithEmailAndPassword(email, password);
+          try {
+            reservation = await reserveUsername(name, result.user);
+          } catch (error) {
+            try { await result.user.delete(); signupAccountRemoved = true; } catch (_) {}
+            throw error;
+          }
+        }
+        currentUser = result.user;
+        try {
+          await claimCreatorAdmin(result.user, reservation.key);
+        } catch (error) {
+          if (reservation.created) await releaseUsername(reservation.key, result.user.uid).catch(() => {});
+          throw error;
         }
         await result.user.updateProfile({ displayName: name });
+        usernameReady = true;
+        signupSucceeded = true;
         localStorage.setItem("communityUsername", name);
         await saveMemberProfile(result.user, name);
         closeDialog("account-dialog");
-        showToast(`Welcome to the room, ${name.split(/\s+/)[0]}.`);
+        showToast(normalizedName(name) === normalizedName(CREATOR_NAME) ? "Welcome, Creator. Your admin account is ready." : `Welcome to the room, ${name.split(/\s+/)[0]}.`);
       } else {
-        await auth.signInWithEmailAndPassword(email, password);
-        closeDialog("account-dialog");
-        showToast("Welcome back.");
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        currentUser = result.user;
+        try {
+          const name = displayName(result.user);
+          const reservation = await reserveUsername(name, result.user);
+          await claimCreatorAdmin(result.user, reservation.key);
+          usernameReady = true;
+          await saveMemberProfile(result.user, name);
+          closeDialog("account-dialog");
+          showToast("Welcome back.");
+        } catch (error) {
+          usernameReady = false;
+          closeDialog("account-dialog");
+          openAccountDialog("account");
+          showMessage("profile-message", `${authErrorMessage(error)} Update your display name in your account settings.`, true);
+        }
       }
-    } catch (error) { setAuthError(error); }
+    } catch (error) {
+      if (authMode === "signup" && !signupAccountRemoved && auth.currentUser && !auth.currentUser.isAnonymous) {
+        currentUser = auth.currentUser;
+        closeDialog("account-dialog");
+        openAccountDialog("account");
+        showMessage("profile-message", `${authErrorMessage(error)} Choose another display name in your account settings.`, true);
+      } else setAuthError(error);
+    }
     finally {
+      if (authMode === "signup") {
+        registrationInProgress = false;
+        if (signupSucceeded) updateProfileUI();
+      }
       button.disabled = false;
       button.textContent = authMode === "signup" ? "Create my account" : "Sign in";
     }
@@ -775,11 +925,20 @@
       if (user) {
         attachPosts();
         attachMembers();
+        attachAdminConfig();
         attachReports();
+        if (user.isAnonymous) usernameReady = false;
+        else {
+          usernameReady = false;
+          if (!registrationInProgress) verifyAccountUsername(user);
+        }
       } else {
         if (postsRef) { postsRef.off("value"); postsRef = null; }
         if (membersRef) { membersRef.off("value"); membersRef = null; }
         if (reportsRef) { reportsRef.off("value"); reportsRef = null; }
+        if (adminConfigRef) { adminConfigRef.off("value"); adminConfigRef = null; }
+        adminUid = null;
+        usernameReady = false;
         reports = {};
         allPosts = [];
         members = {};
@@ -788,7 +947,7 @@
       }
       if (firstAuthEvent) {
         firstAuthEvent = false;
-        if (!user) anonymousLoginPromise = auth.signInAnonymously().catch(error => showToast(authErrorMessage(error))).finally(() => { anonymousLoginPromise = null; });
+        if (!user) anonymousLoginPromise = auth.signInAnonymously().catch(error => showToast(error?.code === "auth/operation-not-allowed" ? "Guest browsing is disabled. Email/password signup is still available." : authErrorMessage(error))).finally(() => { anonymousLoginPromise = null; });
       }
     }, error => showToast(authErrorMessage(error)));
   }
@@ -828,17 +987,27 @@
     });
     $("#profile-form").addEventListener("submit", async event => {
       event.preventDefault();
-      const name = $("#profile-display-name").value.trim();
-      if (name.length < 2 || !currentUser) { showMessage("profile-message", "Please enter a name of at least 2 characters.", true); return; }
+      const name = $("#profile-display-name").value.trim().replace(/\s+/gu, " ");
+      if (Array.from(name).length < 2 || Array.from(name).length > 40 || !currentUser) { showMessage("profile-message", "Please enter a name between 2 and 40 characters.", true); return; }
+      const previousName = displayName();
+      const previousKey = usernameKey(previousName);
+      let reservation;
       try {
+        reservation = await reserveUsername(name, currentUser);
+        await claimCreatorAdmin(currentUser, reservation.key);
         await currentUser.updateProfile({ displayName: name });
+        usernameReady = true;
         localStorage.setItem("communityUsername", name);
         await saveMemberProfile(currentUser, name);
+        if (previousKey !== reservation.key) await releaseUsername(previousKey, currentUser.uid).catch(error => console.warn("Could not release the old display name:", error));
         $("#account-display-name").textContent = name;
         $("#account-avatar").textContent = initials(name);
         updateProfileUI();
         showMessage("profile-message", "Your profile is updated.");
-      } catch (error) { showMessage("profile-message", authErrorMessage(error), true); }
+      } catch (error) {
+        if (reservation?.created && reservation.key !== previousKey) await releaseUsername(reservation.key, currentUser.uid).catch(() => {});
+        showMessage("profile-message", authErrorMessage(error), true);
+      }
     });
 
     $("#compose-button").addEventListener("click", openComposer);
@@ -868,7 +1037,7 @@
         document.querySelectorAll(".post-menu").forEach(menu => menu.remove());
         const menu = document.createElement("div");
         menu.className = "post-menu";
-        menu.innerHTML = post.author.id === currentUser?.uid || currentUser?.uid === ADMIN_UID
+        menu.innerHTML = post.author.id === currentUser?.uid || isAdmin()
           ? `<button data-action="edit-post">Edit post</button><button data-action="delete-post">Delete post</button>`
           : `<button data-action="report-post">Report post</button>`;
         button.after(menu);

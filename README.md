@@ -5,6 +5,8 @@ Commonroom is the community site in this folder. Open `index.html` (or the old `
 ## Features
 
 - Email and password account creation, sign-in, sign-out, and password reset
+- Case-insensitive unique display names reserved transactionally in Firebase, including Unicode-normalized names
+- The first account to claim the exact name `Ⓖ THE Creator Ⓖ` becomes the community admin; that name remains permanently reserved
 - New accounts can claim an existing anonymous session so posts made before signup stay attached to the same account
 - Firebase Realtime Database feed with live posts, replies, reactions, saves, edits, and deletes
 - Search, category spaces, following feed, saved posts, member directory, recent activity, and profile editing
@@ -14,8 +16,10 @@ Commonroom is the community site in this folder. Open `index.html` (or the old `
 
 ## Firebase setup
 
-The page uses the Firebase project already configured for this community. In Firebase Console, enable **Email/Password** and **Anonymous** under Authentication → Sign-in method. The anonymous session lets a visitor browse and lets signup link that session to an email account without changing the UID on older posts. Serve the site from `localhost` or a domain authorized in Firebase Authentication; account creation cannot be relied on from a `file://` URL.
+The page uses the `arduino-guideg` Firebase project already configured for this community. Email/Password is required for account creation. Anonymous sign-in lets visitors browse and lets regular signups link an existing guest session without changing the UID on older posts. For signup, open the page from `http://localhost` or the deployed site rather than `file://`; add that host under Firebase Authentication → Settings → Authorized domains if it is missing. Firebase documents the password provider setup [here](https://firebase.google.com/docs/auth/web/password-auth?hl=en).
 
-Import `database.rules.json` in Realtime Database → Rules before opening the site publicly. The rules preserve the existing `/posts` data, let members edit their own posts and replies, scope reactions to the signed-in member, and reserve report review and resolution for the community admin. The admin UID in the rules and moderation menu is carried over from the original community script (`HlLj9hzon7bs2aEUpuOn97HWl9v1`). Sign in with that Firebase account to see the Moderation item. Do not replace this with a UID supplied by the browser; the same trusted UID must be configured in both the app and database rules.
+To serve this folder locally, open PowerShell here and run `py -m http.server 8000 --bind 127.0.0.1`, then visit `http://localhost:8000/index.html`. Keep the PowerShell window open while using the site.
 
-The member directory writes display name and UID to `/members/{uid}`; it never writes an email address there. Feed reads and writes use the existing `/posts` data shape. Space membership and followed-member preferences are saved in each browser.
+Import the current `database.rules.json` in Realtime Database → Rules before creating accounts. It keeps existing `/posts` data, lets members edit their own posts and replies, reserves display names, and lets the creator account claim admin once at `/communityConfig/adminUid`. Until the creator account claims it, the original admin UID (`HlLj9hzon7bs2aEUpuOn97HWl9v1`) remains a fallback admin. Once claimed, only the creator account is admin.
+
+The member directory writes display name and UID to `/members/{uid}`; it never writes an email address there. Unique name reservations are stored at `/usernames/{normalizedNameKey}`. Firebase Realtime Database transactions serialize competing reservations so only one account can own a name at a time; see the official [transaction guide](https://firebase.google.com/docs/database/web/read-and-write). Feed reads and writes use the existing `/posts` data shape. Space membership and followed-member preferences are saved in each browser.
