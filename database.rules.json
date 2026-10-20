@@ -1,0 +1,61 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "posts": {
+      ".read": "auth != null",
+      "$postId": {
+        ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid))",
+        "title": {
+          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+        },
+        "content": {
+          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+        },
+        "code": {
+          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+        },
+        "edited": {
+          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+        },
+        "editedAt": {
+          ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || auth.uid === root.child('posts').child($postId).child('userId').val())"
+        },
+        "likes": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+          }
+        },
+        "dislikes": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+          }
+        },
+        "favorites": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1')"
+          }
+        },
+        "comments": {
+          "$commentId": {
+            ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+          }
+        }
+      }
+    },
+    "members": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['uid', 'displayName', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('displayName').isString() && newData.child('updatedAt').isNumber()"
+      }
+    },
+    "reports": {
+      ".read": "auth != null && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'",
+      "$reportId": {
+        ".write": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))",
+        ".validate": "auth != null && (auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1' || (newData.hasChildren(['postId', 'reporterId', 'timestamp', 'status']) && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))"
+      }
+    }
+  }
+}

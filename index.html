@@ -21,13 +21,13 @@
       <div class="top-search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m16 16 4.3 4.3"></path></svg>
         <input id="search-input" type="search" placeholder="Search conversations, people, spaces…" aria-label="Search the community">
-        <kbd>⌘ K</kbd>
+        <kbd>Ctrl K</kbd>
       </div>
       <div class="top-actions">
         <button class="icon-button notification-button" id="notifications-button" aria-label="Notifications">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg><i></i>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg><i id="notification-dot"></i>
         </button>
-        <button class="profile-chip" id="profile-button" aria-label="Your profile"><span class="avatar avatar-maya">MC</span><span class="profile-name">Maya</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg></button>
+        <button class="profile-chip" id="profile-button" aria-label="Create an account or sign in"><span class="avatar avatar-maya" id="profile-avatar">?</span><span class="profile-name" id="profile-name">Join</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg></button>
       </div>
     </header>
 
@@ -38,15 +38,12 @@
           <button class="nav-item active" data-view="home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3.5 10 8.5-7 8.5 7v10.5h-6v-7h-5v7h-6z"></path></svg></span>Home<span class="nav-dot"></span></button>
           <button class="nav-item" data-view="saved"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"></path></svg></span>Saved</button>
           <button class="nav-item" data-view="my-posts"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14M5 9h14M5 14h8M5 19h5"></path></svg></span>My posts</button>
+          <button class="nav-item admin-nav-item" id="admin-button" hidden><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v5c0 5.1-3.4 8.7-8 10-4.6-1.3-8-4.9-8-10V6z"></path><path d="m9 12 2 2 4-4"></path></svg></span>Moderation</button>
         </div>
 
         <div class="rail-section spaces-section">
           <div class="rail-heading"><p class="rail-label">YOUR SPACES</p><button class="tiny-add" id="add-space-button" aria-label="Explore spaces">+</button></div>
-          <button class="space-link selected" data-space="All spaces"><span class="space-emoji">✳</span>All spaces</button>
-          <button class="space-link" data-space="Design & making"><span class="space-emoji peach">◒</span>Design &amp; making</button>
-          <button class="space-link" data-space="Slow living"><span class="space-emoji mint">☘</span>Slow living</button>
-          <button class="space-link" data-space="Good questions"><span class="space-emoji lilac">✦</span>Good questions</button>
-          <button class="space-link" data-space="Tiny victories"><span class="space-emoji yellow">↗</span>Tiny victories</button>
+          <div id="spaces-list"><button class="space-link selected" data-space="All spaces"><span class="space-emoji">✳</span>All spaces</button></div>
         </div>
 
         <div class="rail-bottom">
@@ -65,7 +62,7 @@
         <div class="greeting-row"><div><p class="eyebrow" id="today-label">YOUR MONDAY MOMENT</p><h1>A good day to <em>show up.</em></h1></div><div class="weather-note"><span class="sun-icon">☼</span><span>Room for a little<br><b>curiosity today</b></span></div></div>
 
         <section class="composer-card" aria-label="Create a post">
-          <div class="composer-top"><span class="avatar avatar-maya">MC</span><button class="composer-prompt" id="open-composer">What’s on your mind, Maya?</button></div>
+          <div class="composer-top"><span class="avatar avatar-maya" id="composer-avatar">?</span><button class="composer-prompt" id="open-composer">What’s on your mind?</button></div>
           <div class="composer-bottom"><div class="composer-hints"><span class="hint-icon image-hint">▧</span><span>Share a photo</span><span class="hint-separator">·</span><span class="hint-icon">◷</span><span>Start a discussion</span></div><button class="primary-button" id="compose-button"><span>＋</span> Create post</button></div>
         </section>
 
@@ -77,14 +74,14 @@
       </main>
 
       <aside class="right-rail" aria-label="Community highlights">
-        <section class="welcome-card"><div class="welcome-top"><span>✳</span><span class="welcome-kicker">A NOTE FROM THE ROOM</span></div><h2>Small thoughts.<br><em>Big connections.</em></h2><p>We’re better when we make space for each other. Thanks for being here.</p><div class="welcome-signature"><span class="avatar avatar-jules">JL</span><span><b>Jules</b><small>Community host</small></span><span class="signature-heart">♥</span></div></section>
+        <section class="welcome-card"><div class="welcome-top"><span>✳</span><span class="welcome-kicker">A NOTE FROM THE ROOM</span></div><h2>Small thoughts.<br><em>Big connections.</em></h2><p>We’re better when we make space for each other. Thanks for being here.</p><div class="welcome-signature"><span class="avatar avatar-jules">CR</span><span><b>Commonroom</b><small>Community hosts</small></span><span class="signature-heart">♥</span></div></section>
 
         <section class="people-section"><div class="side-heading"><h3>People to know</h3><button class="text-link" id="see-people">See all</button></div><div id="people-list"></div></section>
 
-        <section class="trending-section"><div class="side-heading"><h3>Room for thought</h3><button class="more-dots" aria-label="More topics">···</button></div><p class="side-caption">Conversations picking up today</p><div class="trending-list" id="trending-list"></div></section>
+        <section class="trending-section"><div class="side-heading"><h3>Room for thought</h3><button class="more-dots" id="trend-sort-button" aria-label="Switch conversation sort" title="Switch between newest and most loved">↕</button></div><p class="side-caption">Conversations picking up today</p><div class="trending-list" id="trending-list"></div></section>
 
         <section class="community-stats"><div class="stats-art"><span>✳</span><span>✦</span><span>✿</span></div><div><b id="member-count">2,481</b><span>curious people<br>and counting</span></div><p>You make this place feel like somewhere.</p></section>
-        <footer class="site-footer"><a href="#about">About</a><a href="#guidelines">Guidelines</a><a href="#privacy">Privacy</a><span>© 2026 Commonroom</span></footer>
+        <footer class="site-footer"><button type="button" data-info="about">About</button><button type="button" data-info="guidelines">Guidelines</button><button type="button" data-info="privacy">Privacy</button><span>© 2026 Commonroom</span></footer>
       </aside>
     </div>
   </div>
@@ -93,10 +90,73 @@
     <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close"></button></form>
     <section class="dialog-panel">
       <div class="dialog-header"><div><p class="eyebrow">MAKE A LITTLE ROOM</p><h2 id="dialog-title">Start a conversation</h2></div><button class="close-dialog" id="close-composer" aria-label="Close">×</button></div>
-      <form id="post-form"><label class="field-label" for="post-title">Give it a title</label><input id="post-title" class="text-field title-field" maxlength="100" required placeholder="A question, a thought, a small win…"><label class="field-label" for="post-body">Add a little context</label><textarea id="post-body" class="text-field body-field" maxlength="800" required placeholder="The good stuff starts when you share what’s on your mind."></textarea><div class="form-meta"><label class="select-label" for="post-space">Choose a space</label><select id="post-space"><option>Good questions</option><option>Design &amp; making</option><option>Slow living</option><option>Tiny victories</option></select><span id="character-count">0 / 800</span></div><div class="dialog-actions"><span class="dialog-note"><span>✳</span> Be kind. Stay curious.</span><button class="primary-button" type="submit">Share with the room <span>↗</span></button></div></form>
+      <form id="post-form"><p class="dialog-note author-hint" id="post-author-hint"></p><label class="field-label" for="post-title">Give it a title</label><input id="post-title" class="text-field title-field" maxlength="100" required placeholder="A question, a thought, a small win…"><label class="field-label" for="post-body">Add a little context</label><textarea id="post-body" class="text-field body-field" maxlength="800" required placeholder="The good stuff starts when you share what’s on your mind."></textarea><div class="form-meta"><label class="select-label" for="post-space">Choose a space</label><select id="post-space"><option>Good questions</option><option>Design &amp; making</option><option>Slow living</option><option>Tiny victories</option></select><span id="character-count">0 / 800</span></div><div class="dialog-actions"><span class="dialog-note"><span>✳</span> Be kind. Stay curious.</span><button class="primary-button" type="submit">Share with the room <span>↗</span></button></div></form>
     </section>
   </dialog>
+  <dialog class="composer-dialog account-dialog" id="account-dialog" aria-labelledby="account-dialog-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close account dialog"></button></form>
+    <section class="dialog-panel">
+      <div class="dialog-header"><div><p class="eyebrow">YOUR PLACE IN THE ROOM</p><h2 id="account-dialog-title">Welcome in</h2></div><button class="close-dialog" id="close-account" aria-label="Close">×</button></div>
+      <div id="auth-panel">
+        <div class="auth-tabs" role="tablist" aria-label="Account access"><button type="button" class="auth-tab active" data-auth-mode="signin" aria-selected="true">Sign in</button><button type="button" class="auth-tab" data-auth-mode="signup" aria-selected="false">Create account</button></div>
+        <p class="auth-intro" id="auth-intro">Good to see you again. Come on in.</p>
+        <form id="auth-form">
+          <label class="field-label auth-name-field" for="auth-name" hidden>Your name<input id="auth-name" class="text-field" maxlength="40" autocomplete="name" placeholder="How should we introduce you?"></label>
+          <label class="field-label" for="auth-email">Email<input id="auth-email" class="text-field" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label class="field-label" for="auth-password">Password<input id="auth-password" class="text-field" type="password" autocomplete="current-password" minlength="6" required placeholder="At least 6 characters"></label>
+          <label class="field-label auth-confirm-field" for="auth-confirm" hidden>Confirm password<input id="auth-confirm" class="text-field" type="password" autocomplete="new-password" minlength="6" placeholder="Type it one more time"></label>
+          <p class="auth-message" id="auth-message" role="alert" hidden></p>
+          <button class="primary-button auth-submit" id="auth-submit" type="submit">Sign in</button>
+        </form>
+        <button class="text-link reset-link" id="forgot-password" type="button">Forgot your password?</button>
+        <p class="auth-footnote">Your account lets you post, reply, and keep your place across devices.</p>
+      </div>
+      <div id="account-panel" hidden>
+        <div class="account-summary"><span class="avatar avatar-maya" id="account-avatar">?</span><div><strong id="account-display-name">Community member</strong><span id="account-email"></span></div></div>
+        <form id="profile-form"><label class="field-label" for="profile-display-name">Display name<input id="profile-display-name" class="text-field" maxlength="40" required></label><div class="dialog-actions"><span class="dialog-note">This is how people see you.</span><button class="primary-button" type="submit">Save profile</button></div></form>
+        <div class="account-actions"><button class="secondary-button" id="send-reset-email" type="button">Reset password</button><button class="secondary-button danger-button" id="sign-out-button" type="button">Sign out</button></div>
+        <p class="auth-message" id="profile-message" role="status" hidden></p>
+      </div>
+    </section>
+  </dialog>
+  <dialog class="composer-dialog" id="notifications-dialog" aria-labelledby="notifications-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close notifications"></button></form>
+    <section class="dialog-panel"><div class="dialog-header"><div><p class="eyebrow">A LITTLE ROOM TO CATCH UP</p><h2 id="notifications-title">Your activity</h2></div><button class="close-dialog" data-close-dialog="notifications-dialog" aria-label="Close">×</button></div><div class="activity-list" id="activity-list"></div></section>
+  </dialog>
+  <dialog class="composer-dialog" id="members-dialog" aria-labelledby="members-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close members"></button></form>
+    <section class="dialog-panel"><div class="dialog-header"><div><p class="eyebrow">GOOD PEOPLE, GOOD IDEAS</p><h2 id="members-title">People in the room</h2></div><button class="close-dialog" data-close-dialog="members-dialog" aria-label="Close">×</button></div><div id="members-list" class="members-list"></div></section>
+  </dialog>
+  <dialog class="composer-dialog" id="spaces-dialog" aria-labelledby="spaces-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close spaces"></button></form>
+    <section class="dialog-panel"><div class="dialog-header"><div><p class="eyebrow">FIND YOUR CORNER</p><h2 id="spaces-title">Explore spaces</h2></div><button class="close-dialog" data-close-dialog="spaces-dialog" aria-label="Close">×</button></div><p class="auth-intro">Choose the conversations you’d like close by.</p><div id="space-explorer" class="space-explorer"></div></section>
+  </dialog>
+  <dialog class="composer-dialog" id="info-dialog" aria-labelledby="info-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close information"></button></form>
+    <section class="dialog-panel"><div class="dialog-header"><div><p class="eyebrow">A FEW THINGS TO KNOW</p><h2 id="info-title">About Commonroom</h2></div><button class="close-dialog" data-close-dialog="info-dialog" aria-label="Close">×</button></div><p class="info-copy" id="info-copy"></p></section>
+  </dialog>
+  <dialog class="composer-dialog" id="admin-dialog" aria-labelledby="admin-title">
+    <form method="dialog" class="dialog-dismiss-form"><button class="dialog-scrim" aria-label="Close moderation"></button></form>
+    <section class="dialog-panel admin-panel"><div class="dialog-header"><div><p class="eyebrow">COMMUNITY CARE</p><h2 id="admin-title">Moderation desk</h2></div><button class="close-dialog" data-close-dialog="admin-dialog" aria-label="Close">×</button></div><div class="admin-summary"><span class="admin-shield">✳</span><p>Review member reports and keep the room welcoming.</p><strong id="open-report-count">0 open reports</strong></div><div id="report-list" class="report-list"></div></section>
+  </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyCVq2PWrDMXTsG4GdceE4tUvTYeRYsul1Q",
+      authDomain: "arduino-guideg.firebaseapp.com",
+      databaseURL: "https://arduino-guideg-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "arduino-guideg",
+      storageBucket: "arduino-guideg.appspot.com",
+      messagingSenderId: "146740789054",
+      appId: "1:146740789054:web:069f11c6f6aa314b5af66f"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.communityAuth = firebase.auth();
+    window.communityDb = firebase.database();
+  </script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
