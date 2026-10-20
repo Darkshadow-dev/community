@@ -86,9 +86,32 @@
 
   function displayName(user = currentUser) {
     if (!user) return "Community member";
-    if (user.displayName) return user.displayName;
-    if (!user.isAnonymous) return user.email?.split("@")[0] || "Community member";
+    if (!user.isAnonymous) {
+      const savedName = localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName;
+      if (savedName) return savedName;
+      if (user.displayName) return user.displayName;
+      return user.email?.split("@")[0] || "Community member";
+    }
     return localStorage.getItem("communityUsername") || "Community member";
+  }
+
+  async function resolveAccountName(user) {
+    const savedName = localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName;
+    if (savedName) return savedName;
+    try {
+      const profile = await db.ref(`members/${user.uid}/displayName`).once("value");
+      if (profile.val()) return profile.val();
+      const reservations = await db.ref("usernames").orderByChild("uid").equalTo(user.uid).once("value");
+      const reservation = Object.values(reservations.val() || {})[0];
+      if (reservation?.displayName) return reservation.displayName;
+    } catch (error) {
+      console.warn("Could not load the saved account name:", error);
+    }
+    return user.displayName || user.email?.split("@")[0] || "Community member";
+  }
+
+  function rememberAccountName(user, name) {
+    if (user?.uid && !user.isAnonymous) localStorage.setItem(`communityUsername.${user.uid}`, name);
   }
 
   function initials(name) {
@@ -245,7 +268,8 @@
   async function verifyAccountUsername(user) {
     if (!user || user.isAnonymous) return;
     try {
-      const name = displayName(user);
+      const name = await resolveAccountName(user);
+      rememberAccountName(user, name);
       const reservation = await reserveUsername(name, user);
       await claimCreatorAdmin(user, reservation.key);
       usernameReady = true;
@@ -863,10 +887,9 @@
           if (reservation.created) await releaseUsername(reservation.key, result.user.uid).catch(() => {});
           throw error;
         }
-        await result.user.updateProfile({ displayName: name });
         usernameReady = true;
         signupSucceeded = true;
-        localStorage.setItem("communityUsername", name);
+        rememberAccountName(result.user, name);
         await saveMemberProfile(result.user, name);
         closeDialog("account-dialog");
         showToast(normalizedName(name) === normalizedName(CREATOR_NAME) ? "Welcome, Creator. Your admin account is ready." : `Welcome to the room, ${name.split(/\s+/)[0]}.`);
@@ -874,7 +897,8 @@
         const result = await auth.signInWithEmailAndPassword(email, password);
         currentUser = result.user;
         try {
-          const name = displayName(result.user);
+          const name = await resolveAccountName(result.user);
+          rememberAccountName(result.user, name);
           const reservation = await reserveUsername(name, result.user);
           await claimCreatorAdmin(result.user, reservation.key);
           usernameReady = true;
@@ -995,9 +1019,8 @@
       try {
         reservation = await reserveUsername(name, currentUser);
         await claimCreatorAdmin(currentUser, reservation.key);
-        await currentUser.updateProfile({ displayName: name });
         usernameReady = true;
-        localStorage.setItem("communityUsername", name);
+        rememberAccountName(currentUser, name);
         await saveMemberProfile(currentUser, name);
         if (previousKey !== reservation.key) await releaseUsername(previousKey, currentUser.uid).catch(error => console.warn("Could not release the old display name:", error));
         $("#account-display-name").textContent = name;
