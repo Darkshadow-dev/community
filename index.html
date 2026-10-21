@@ -149,13 +149,19 @@
 const firebaseConfig = {
   apiKey: "AIzaSyCmgXDd2Ya9yUSZq7Veae-dhbyj3fmw7nE",
   authDomain: "guidelines-community.firebaseapp.com",
+  // Reuse the europe-west1 RTDB region from the site's previous Firebase setup.
+  // Replace this value if the new database was created in another region.
+  databaseURL: "https://guidelines-community-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "guidelines-community",
   storageBucket: "guidelines-community.firebasestorage.app",
   messagingSenderId: "22850918912",
   appId: "1:22850918912:web:ec176a35a9a9828ae9d6e5",
   measurementId: "G-E58BG53GEM"
 };
+const communityFirebaseApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+window.communityAuth = firebase.auth(communityFirebaseApp);
+window.communityDb = firebase.database(communityFirebaseApp);
   </script>
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

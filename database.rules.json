@@ -3,72 +3,84 @@
     ".read": false,
     ".write": false,
     "communityConfig": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000))",
       "adminUid": {
-        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid && root.child('usernames').child('67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67').child('uid').val() === auth.uid) || (data.exists() && data.val() === auth.uid && newData.val() === data.val()))",
+        ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && ((!data.exists() && newData.val() === auth.uid && root.child('usernames').child('67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67').child('uid').val() === auth.uid) || (data.exists() && data.val() === auth.uid && newData.val() === data.val()))",
         ".validate": "newData.isString() && newData.val() === auth.uid"
       }
     },
     "usernames": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000))",
+      ".indexOn": ["uid"],
       "$usernameKey": {
-        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid && ($usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67' || (auth.token.email != null && newData.child('displayName').val() === 'Ⓖ THE Creator Ⓖ' && !root.child('communityConfig').child('adminUid').exists()))) || (data.child('uid').val() === auth.uid && newData.exists() && newData.child('uid').val() === auth.uid) || (data.child('uid').val() === auth.uid && !newData.exists() && $usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67'))",
-        ".validate": "!newData.exists() || (newData.hasChildren(['uid', 'displayName', 'createdAt']) && newData.child('uid').isString() && newData.child('uid').val() === auth.uid && newData.child('displayName').isString() && newData.child('createdAt').isNumber())"
+        ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && ((!data.exists() && newData.child('uid').val() === auth.uid && ($usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67' || (auth.token.email != null && newData.child('displayName').val() === 'Ⓖ THE Creator Ⓖ' && !root.child('communityConfig').child('adminUid').exists()))) || (data.child('uid').val() === auth.uid && newData.exists() && newData.child('uid').val() === auth.uid) || (data.child('uid').val() === auth.uid && !newData.exists() && $usernameKey !== '67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67'))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['uid', 'displayName', 'createdAt']) && newData.child('uid').isString() && newData.child('uid').val() === auth.uid && newData.child('displayName').isString() && newData.child('displayName').val().length <= 40 && newData.child('createdAt').isNumber())"
       }
     },
     "posts": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000))",
+      ".indexOn": ["timestamp", "userId"],
       "$postId": {
-        ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid))",
+        ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('userId').val() === auth.uid))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['id', 'username', 'title', 'category', 'content', 'timestamp', 'userId']) && newData.child('id').val() === $postId && newData.child('username').isString() && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 100 && newData.child('category').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 800 && newData.child('timestamp').isNumber() && newData.child('userId').isString() && (data.exists() ? newData.child('userId').val() === data.child('userId').val() : newData.child('userId').val() === auth.uid))",
         "title": {
-          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || auth.uid === root.child('posts').child($postId).child('userId').val())",
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
         },
         "content": {
-          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || auth.uid === root.child('posts').child($postId).child('userId').val())",
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 800"
         },
         "code": {
-          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || auth.uid === root.child('posts').child($postId).child('userId').val())",
+          ".validate": "newData.isString() && newData.val().length <= 5000"
         },
         "edited": {
-          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || auth.uid === root.child('posts').child($postId).child('userId').val())",
+          ".validate": "newData.isBoolean()"
         },
         "editedAt": {
-          ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || auth.uid === root.child('posts').child($postId).child('userId').val())"
+          ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || auth.uid === root.child('posts').child($postId).child('userId').val())",
+          ".validate": "newData.isNumber()"
         },
         "likes": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
+            ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && auth.uid === $uid",
+            ".validate": "!newData.exists() || (newData.hasChildren(['timestamp']) && newData.child('timestamp').isNumber())"
           }
         },
         "dislikes": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
+            ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && auth.uid === $uid",
+            ".validate": "!newData.exists() || (newData.hasChildren(['timestamp']) && newData.child('timestamp').isNumber())"
           }
         },
         "favorites": {
           "$uid": {
-            ".write": "auth != null && (auth.uid === $uid || auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))"
+            ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && auth.uid === $uid",
+            ".validate": "!newData.exists() || (newData.hasChildren(['timestamp']) && newData.child('timestamp').isNumber())"
           }
         },
         "comments": {
           "$commentId": {
-            ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))"
+            ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!data.exists() && newData.child('userId').val() === auth.uid) || (data.exists() && data.child('userId').val() === auth.uid))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id', 'username', 'content', 'timestamp', 'userId']) && newData.child('id').val() === $commentId && newData.child('username').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 500 && newData.child('timestamp').isNumber() && newData.child('userId').isString() && (data.exists() ? newData.child('userId').val() === data.child('userId').val() : newData.child('userId').val() === auth.uid))"
           }
         }
       }
     },
     "members": {
-      ".read": "auth != null",
+      ".read": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000))",
       "$uid": {
-        ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.hasChildren(['uid', 'displayName', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('displayName').isString() && newData.child('updatedAt').isNumber()"
+        ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['uid', 'displayName', 'updatedAt']) && newData.child('uid').val() === $uid && newData.child('displayName').isString() && newData.child('displayName').val().length <= 40 && newData.child('updatedAt').isNumber()"
       }
     },
     "reports": {
-      ".read": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1'))",
+      ".read": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && auth.uid === root.child('communityConfig').child('adminUid').val()",
       "$reportId": {
-        ".write": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))",
-        ".validate": "auth != null && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!root.child('communityConfig').child('adminUid').exists() && auth.uid === 'HlLj9hzon7bs2aEUpuOn97HWl9v1') || (newData.hasChildren(['postId', 'reporterId', 'timestamp', 'status']) && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))"
+        ".write": "auth != null && (auth.token.email != null || auth.token.firebase.sign_in_provider != 'anonymous' || now < (auth.token.auth_time * 1000 + 7776000000)) && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open'))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['postId', 'reporterId', 'timestamp', 'status']) && newData.child('postId').isString() && newData.child('reporterId').isString() && newData.child('timestamp').isNumber() && newData.child('status').isString() && (auth.uid === root.child('communityConfig').child('adminUid').val() || (!data.exists() && newData.child('reporterId').val() === auth.uid && newData.child('status').val() === 'open')))"
       }
     }
   }

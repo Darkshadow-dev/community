@@ -1,9 +1,9 @@
 (() => {
   const db = window.communityDb;
   const auth = window.communityAuth;
-  const LEGACY_ADMIN_UID = "HlLj9hzon7bs2aEUpuOn97HWl9v1";
   const CREATOR_NAME = "Ⓖ THE Creator Ⓖ";
   const CREATOR_USERNAME_KEY = "67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67";
+  const GUEST_TRIAL_MS = 90 * 24 * 60 * 60 * 1000;
   const spaces = [
     { name: "Design & making", category: "project", icon: "◒", tone: "peach" },
     { name: "Slow living", category: "help", icon: "☘", tone: "mint" },
@@ -23,8 +23,8 @@
     "auth/invalid-credential": "That email and password don’t match.",
     "auth/credential-already-in-use": "That email already belongs to another account. Sign in to it instead.",
     "auth/operation-not-allowed": "Email and password accounts are not enabled for this Firebase project yet.",
-    "auth/admin-restricted-operation": "Firebase blocked signup for this project. Check that Email/Password is enabled in arduino-guideg Authentication settings.",
-    "auth/invalid-api-key": "Firebase rejected this app’s API key. Check the Firebase web app configuration for arduino-guideg.",
+    "auth/admin-restricted-operation": "Firebase blocked signup for this project. Check that Email/Password is enabled in guidelines-community Authentication settings.",
+    "auth/invalid-api-key": "Firebase rejected this app’s API key. Check the Firebase web app configuration for guidelines-community.",
     "auth/unauthorized-domain": "This site’s domain is not authorized in Firebase Authentication. Add localhost or your deployed domain under Authentication → Settings → Authorized domains, then reopen the site there.",
     "auth/network-request-failed": "Firebase could not connect. Check your internet connection and try again.",
     "auth/too-many-requests": "Too many attempts. Wait a little and try again.",
@@ -86,13 +86,11 @@
 
   function displayName(user = currentUser) {
     if (!user) return "Community member";
-    if (!user.isAnonymous) {
-      const savedName = localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName;
-      if (savedName) return savedName;
-      if (user.displayName) return user.displayName;
-      return user.email?.split("@")[0] || "Community member";
-    }
-    return localStorage.getItem("communityUsername") || "Community member";
+    const savedName = localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName;
+    if (savedName) return savedName;
+    if (user.displayName) return user.displayName;
+    if (user.isAnonymous) return `Guest-${user.uid}`;
+    return user.email?.split("@")[0] || "Community member";
   }
 
   async function resolveAccountName(user) {
@@ -111,7 +109,7 @@
   }
 
   function rememberAccountName(user, name) {
-    if (user?.uid && !user.isAnonymous) localStorage.setItem(`communityUsername.${user.uid}`, name);
+    if (user?.uid) localStorage.setItem(`communityUsername.${user.uid}`, name);
   }
 
   function initials(name) {
@@ -209,12 +207,18 @@
     return ({ project: "projects", question: "questions", help: "help", release: "small wins" })[category] || "community";
   }
 
+  function isGuestTrialActive(user = currentUser) {
+    if (!user?.isAnonymous) return false;
+    const createdAt = Date.parse(user.metadata?.creationTime || "");
+    return Number.isFinite(createdAt) && Date.now() < createdAt + GUEST_TRIAL_MS;
+  }
+
   function canWrite() {
-    return Boolean(currentUser && !currentUser.isAnonymous);
+    return Boolean(currentUser && (!currentUser.isAnonymous || isGuestTrialActive(currentUser)));
   }
 
   function isAdmin() {
-    return Boolean(currentUser && (currentUser.uid === adminUid || (!adminUid && currentUser.uid === LEGACY_ADMIN_UID)));
+    return Boolean(currentUser && adminUid && currentUser.uid === adminUid);
   }
 
   function normalizedName(name) {
@@ -266,16 +270,26 @@
   }
 
   async function verifyAccountUsername(user) {
-    if (!user || user.isAnonymous) return;
+    if (!user) return;
+    if (user.isAnonymous && !isGuestTrialActive(user)) {
+      usernameReady = false;
+      updateProfileUI();
+      showToast("Your 90-day guest period has ended. Create an account to keep using the community.");
+      return;
+    }
     try {
-      const name = await resolveAccountName(user);
+      const name = user.isAnonymous
+        ? (localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName || `Guest-${user.uid}`)
+        : await resolveAccountName(user);
       rememberAccountName(user, name);
       const reservation = await reserveUsername(name, user);
       await claimCreatorAdmin(user, reservation.key);
+      if (auth.currentUser?.uid !== user.uid) return;
       usernameReady = true;
       await saveMemberProfile(user, name);
       updateProfileUI();
     } catch (error) {
+      if (auth.currentUser?.uid !== user.uid) return;
       usernameReady = false;
       updateProfileUI();
       showToast(`${authErrorMessage(error)} Open your account settings to choose another display name.`);
@@ -284,6 +298,15 @@
 
   function requireAccount(action) {
     if (canWrite() && usernameReady) return true;
+    if (currentUser?.isAnonymous) {
+      openAccountDialog("signup");
+      if (!isGuestTrialActive(currentUser)) {
+        $("#auth-intro").textContent = "Your 90-day guest period has ended. Create an account to keep using the community.";
+      } else {
+        $("#auth-intro").textContent = "Your guest profile is getting ready. Create an account any time to keep your place across devices.";
+      }
+      return false;
+    }
     if (canWrite()) {
       openAccountDialog("account");
       showMessage("profile-message", "Choose a display name that is not already in use before joining in.", true);
@@ -337,7 +360,7 @@
   }
 
   function openAccountDialog(mode = "signin") {
-    const authenticated = canWrite();
+    const authenticated = Boolean(currentUser && !currentUser.isAnonymous);
     $("#auth-panel").hidden = authenticated;
     $("#account-panel").hidden = !authenticated;
     $("#account-dialog-title").textContent = authenticated ? "Your account" : "Welcome in";
@@ -349,7 +372,13 @@
       $("#account-avatar").className = `avatar ${userAvatar()}`;
       $("#profile-display-name").value = name;
     } else {
-      setAuthMode(mode);
+      setAuthMode(currentUser?.isAnonymous ? "signup" : mode);
+      if (currentUser?.isAnonymous) {
+        $("#account-dialog-title").textContent = isGuestTrialActive(currentUser) ? "Keep your place" : "Continue with an account";
+        $("#auth-intro").textContent = isGuestTrialActive(currentUser)
+          ? "Create an account to keep your posts and name if you switch devices."
+          : "Your guest period has ended. Create an account to continue posting and replying.";
+      }
     }
     openDialog("account-dialog");
   }
@@ -360,7 +389,11 @@
     $("#auth-panel").hidden = false;
     $("#account-panel").hidden = true;
     $("#account-dialog-title").textContent = create ? "Make yourself at home" : "Welcome back";
-    $("#auth-intro").textContent = create ? "Choose a unique name and add your email and password to join in." : "Good to see you again. Come on in.";
+    $("#auth-intro").textContent = create
+      ? currentUser?.isAnonymous
+        ? "Add an email and password to keep your guest name and posts on this account."
+        : "You can browse and join as a guest for 90 days, or create an account to keep your place."
+      : "Good to see you again. Come on in.";
     $(".auth-name-field").hidden = !create;
     $("#auth-name-hint").hidden = !create;
     $(".auth-confirm-field").hidden = !create;
@@ -374,7 +407,7 @@
     });
     hideMessage("auth-message");
     if (create) {
-      const savedName = localStorage.getItem("communityUsername") || "";
+      const savedName = currentUser?.uid ? localStorage.getItem(`communityUsername.${currentUser.uid}`) || "" : localStorage.getItem("communityUsername") || "";
       if (!$("#auth-name").value) $("#auth-name").value = savedName;
     }
   }
@@ -397,7 +430,7 @@
   }
 
   async function saveMemberProfile(user, name = displayName(user)) {
-    if (!user || user.isAnonymous) return;
+    if (!user) return;
     try {
       await db.ref(`members/${user.uid}`).update({
         uid: user.uid,
@@ -411,6 +444,7 @@
 
   function updateProfileUI() {
     const signedIn = canWrite();
+    const guest = Boolean(currentUser?.isAnonymous && isGuestTrialActive(currentUser));
     const adminButton = $("#admin-button");
     if (adminButton) adminButton.hidden = !isAdmin();
     const name = signedIn ? displayName() : "Join";
@@ -419,8 +453,8 @@
     $("#profile-avatar").className = `avatar ${signedIn ? userAvatar() : "avatar-maya"}`;
     $("#composer-avatar").textContent = signedIn ? initials(name) : "?";
     $("#composer-avatar").className = `avatar ${signedIn ? userAvatar() : "avatar-maya"}`;
-    $("#profile-button").setAttribute("aria-label", signedIn ? `Your account, ${name}` : "Create an account or sign in");
-    $("#profile-button").title = signedIn ? "Your account" : "Create an account or sign in";
+    $("#profile-button").setAttribute("aria-label", guest ? `Guest profile, ${name}. Create an account to keep your place.` : signedIn ? `Your account, ${name}` : "Create an account or sign in");
+    $("#profile-button").title = guest ? "Create an account to keep your place" : signedIn ? "Your account" : "Create an account or sign in";
     if (signedIn && usernameReady) saveMemberProfile(currentUser, name);
     renderPosts();
     renderPeople();
@@ -834,6 +868,8 @@
   async function submitAuth(event) {
     event.preventDefault();
     if (!auth) { showMessage("auth-message", "Firebase Authentication is not available.", true); return; }
+    const submittingSignup = authMode === "signup";
+    if (submittingSignup) registrationInProgress = true;
     if (!authReady) await authReadyPromise;
     if (anonymousLoginPromise) await anonymousLoginPromise;
     hideMessage("auth-message");
@@ -841,12 +877,11 @@
     const password = $("#auth-password").value;
     const button = $("#auth-submit");
     button.disabled = true;
-    button.textContent = authMode === "signup" ? "Creating your account…" : "Signing in…";
+    button.textContent = submittingSignup ? "Creating your account…" : "Signing in…";
     let signupSucceeded = false;
     let signupAccountRemoved = false;
-    if (authMode === "signup") registrationInProgress = true;
     try {
-      if (authMode === "signup") {
+      if (submittingSignup) {
         const name = $("#auth-name").value.trim().replace(/\s+/gu, " ");
         const confirmation = $("#auth-confirm").value;
         if (Array.from(name).length < 2) throw new Error("Please enter a name of at least 2 characters.");
@@ -858,7 +893,8 @@
         if (auth.currentUser?.isAnonymous) {
           const guest = auth.currentUser;
           const credential = firebase.auth.EmailAuthProvider.credential(email, password);
-          if (usernameKey(name) === CREATOR_USERNAME_KEY) {
+          const canReserveBeforeLink = isGuestTrialActive(guest) && usernameKey(name) !== CREATOR_USERNAME_KEY;
+          if (!canReserveBeforeLink) {
             result = await guest.linkWithCredential(credential);
             await result.user.getIdToken(true);
             reservation = await reserveUsername(name, result.user);
@@ -871,6 +907,9 @@
               throw error;
             }
           }
+          const previousGuestName = localStorage.getItem(`communityUsername.${guest.uid}`) || members[guest.uid]?.displayName || `Guest-${guest.uid}`;
+          const previousGuestKey = usernameKey(previousGuestName);
+          if (previousGuestKey !== reservation.key) await releaseUsername(previousGuestKey, guest.uid).catch(error => console.warn("Could not release the temporary guest name:", error));
         } else {
           result = await auth.createUserWithEmailAndPassword(email, password);
           try {
@@ -913,7 +952,7 @@
         }
       }
     } catch (error) {
-      if (authMode === "signup" && !signupAccountRemoved && auth.currentUser && !auth.currentUser.isAnonymous) {
+      if (submittingSignup && !signupAccountRemoved && auth.currentUser && !auth.currentUser.isAnonymous) {
         currentUser = auth.currentUser;
         closeDialog("account-dialog");
         openAccountDialog("account");
@@ -921,12 +960,12 @@
       } else setAuthError(error);
     }
     finally {
-      if (authMode === "signup") {
+      if (submittingSignup) {
         registrationInProgress = false;
         if (signupSucceeded) updateProfileUI();
       }
       button.disabled = false;
-      button.textContent = authMode === "signup" ? "Create my account" : "Sign in";
+      button.textContent = submittingSignup ? "Create my account" : "Sign in";
     }
   }
 
@@ -944,18 +983,25 @@
       currentUser = user;
       if (!authReady) { authReady = true; resolveAuthReady(); }
       loadPreferences();
-      updateProfileUI();
-      updateStats();
-      if (user) {
+      if (user && canWrite()) {
         attachPosts();
         attachMembers();
         attachAdminConfig();
-        attachReports();
-        if (user.isAnonymous) usernameReady = false;
-        else {
+        if (!registrationInProgress) {
           usernameReady = false;
-          if (!registrationInProgress) verifyAccountUsername(user);
+          verifyAccountUsername(user);
         }
+      } else if (user) {
+        if (postsRef) { postsRef.off("value"); postsRef = null; }
+        if (membersRef) { membersRef.off("value"); membersRef = null; }
+        if (reportsRef) { reportsRef.off("value"); reportsRef = null; }
+        if (adminConfigRef) { adminConfigRef.off("value"); adminConfigRef = null; }
+        adminUid = null;
+        usernameReady = false;
+        reports = {};
+        allPosts = [];
+        members = {};
+        showToast("Your 90-day guest period has ended. Create an account to continue.");
       } else {
         if (postsRef) { postsRef.off("value"); postsRef = null; }
         if (membersRef) { membersRef.off("value"); membersRef = null; }
@@ -969,6 +1015,8 @@
         renderPosts(); renderPeople(); renderTopics(); updateStats();
         renderAdminReports();
       }
+      updateProfileUI();
+      updateStats();
       if (firstAuthEvent) {
         firstAuthEvent = false;
         if (!user) anonymousLoginPromise = auth.signInAnonymously().catch(error => showToast(error?.code === "auth/operation-not-allowed" ? "Guest browsing is disabled. Email/password signup is still available." : authErrorMessage(error))).finally(() => { anonymousLoginPromise = null; });
