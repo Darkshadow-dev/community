@@ -13,7 +13,7 @@ Commonroom is a live community site backed by Firebase Authentication and Realti
 
 ## Firebase project setup
 
-The page is configured for Firebase project `guidelines-community`. The Realtime Database URL in `index.html` uses `europe-west1`, matching the prior site's database region. Confirm the new database uses that same region; the exact URL appears at the top of Realtime Database → Data. If Firebase shows a different URL, copy it into the `databaseURL` value in `index.html`.
+The page is configured for Firebase project `guidelines-community`. Confirm the `databaseURL` value in `index.html` matches the URL shown at the top of Realtime Database → Data. It currently uses `europe-west1`, matching the prior site's region; replace it if the new database uses another region.
 
 In Firebase Console → Authentication → Sign-in method, enable **Email/Password** and **Anonymous**. Add `localhost` and the hosted site domain under Authentication → Settings → Authorized domains. Firebase setup references: [Email and password authentication](https://firebase.google.com/docs/auth/web/password-auth) and [Anonymous authentication](https://firebase.google.com/docs/auth/web/anonymous-auth).
 
@@ -27,7 +27,7 @@ The committed rules protect posts, comments, display-name claims, profiles, repo
 firebase deploy --only database
 ```
 
-You can also copy `database.rules.json` into Firebase Console → Realtime Database → Rules and publish it there. The Firebase Console account currently open in the browser reports that it cannot access this project, so cloud deployment and confirmation of the database region still need an account with access.
+You can also copy `database.rules.json` into Firebase Console → Realtime Database → Rules and publish it there. Publishing requires a Google account with access to `guidelines-community`.
 
 To serve the site locally, run this in PowerShell from this folder:
 
