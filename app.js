@@ -3,7 +3,6 @@
   const auth = window.communityAuth;
   const CREATOR_NAME = "Ⓖ THE Creator Ⓖ";
   const CREATOR_USERNAME_KEY = "67-20-74-68-65-20-63-72-65-61-74-6f-72-20-67";
-  const GUEST_TRIAL_MS = 90 * 24 * 60 * 60 * 1000;
   const spaces = [
     { name: "Design & making", category: "project", icon: "◒", tone: "peach" },
     { name: "Slow living", category: "help", icon: "☘", tone: "mint" },
@@ -207,14 +206,8 @@
     return ({ project: "projects", question: "questions", help: "help", release: "small wins" })[category] || "community";
   }
 
-  function isGuestTrialActive(user = currentUser) {
-    if (!user?.isAnonymous) return false;
-    const createdAt = Date.parse(user.metadata?.creationTime || "");
-    return Number.isFinite(createdAt) && Date.now() < createdAt + GUEST_TRIAL_MS;
-  }
-
   function canWrite() {
-    return Boolean(currentUser && (!currentUser.isAnonymous || isGuestTrialActive(currentUser)));
+    return Boolean(currentUser);
   }
 
   function isAdmin() {
@@ -271,12 +264,6 @@
 
   async function verifyAccountUsername(user) {
     if (!user) return;
-    if (user.isAnonymous && !isGuestTrialActive(user)) {
-      usernameReady = false;
-      updateProfileUI();
-      showToast("Your 90-day guest period has ended. Create an account to keep using the community.");
-      return;
-    }
     try {
       const name = user.isAnonymous
         ? (localStorage.getItem(`communityUsername.${user.uid}`) || members[user.uid]?.displayName || `Guest-${user.uid}`)
@@ -300,11 +287,7 @@
     if (canWrite() && usernameReady) return true;
     if (currentUser?.isAnonymous) {
       openAccountDialog("signup");
-      if (!isGuestTrialActive(currentUser)) {
-        $("#auth-intro").textContent = "Your 90-day guest period has ended. Create an account to keep using the community.";
-      } else {
-        $("#auth-intro").textContent = "Your guest profile is getting ready. Create an account any time to keep your place across devices.";
-      }
+      $("#auth-intro").textContent = "Your guest profile is getting ready. Try again shortly, or create an account to keep your name across devices.";
       return false;
     }
     if (canWrite()) {
@@ -374,10 +357,8 @@
     } else {
       setAuthMode(currentUser?.isAnonymous ? "signup" : mode);
       if (currentUser?.isAnonymous) {
-        $("#account-dialog-title").textContent = isGuestTrialActive(currentUser) ? "Keep your place" : "Continue with an account";
-        $("#auth-intro").textContent = isGuestTrialActive(currentUser)
-          ? "Create an account to keep your posts and name if you switch devices."
-          : "Your guest period has ended. Create an account to continue posting and replying.";
+        $("#account-dialog-title").textContent = "Your guest account";
+        $("#auth-intro").textContent = "Add an email and password to keep your guest name and posts on an account.";
       }
     }
     openDialog("account-dialog");
@@ -392,7 +373,7 @@
     $("#auth-intro").textContent = create
       ? currentUser?.isAnonymous
         ? "Add an email and password to keep your guest name and posts on this account."
-        : "You can browse and join as a guest for 90 days, or create an account to keep your place."
+        : "You can browse and join as a guest, or create an account to keep your place across devices."
       : "Good to see you again. Come on in.";
     $(".auth-name-field").hidden = !create;
     $("#auth-name-hint").hidden = !create;
@@ -444,7 +425,7 @@
 
   function updateProfileUI() {
     const signedIn = canWrite();
-    const guest = Boolean(currentUser?.isAnonymous && isGuestTrialActive(currentUser));
+    const guest = Boolean(currentUser?.isAnonymous);
     const adminButton = $("#admin-button");
     if (adminButton) adminButton.hidden = !isAdmin();
     const name = signedIn ? displayName() : "Join";
@@ -893,7 +874,7 @@
         if (auth.currentUser?.isAnonymous) {
           const guest = auth.currentUser;
           const credential = firebase.auth.EmailAuthProvider.credential(email, password);
-          const canReserveBeforeLink = isGuestTrialActive(guest) && usernameKey(name) !== CREATOR_USERNAME_KEY;
+          const canReserveBeforeLink = usernameKey(name) !== CREATOR_USERNAME_KEY;
           if (!canReserveBeforeLink) {
             result = await guest.linkWithCredential(credential);
             await result.user.getIdToken(true);
@@ -983,7 +964,7 @@
       currentUser = user;
       if (!authReady) { authReady = true; resolveAuthReady(); }
       loadPreferences();
-      if (user && canWrite()) {
+      if (user) {
         attachPosts();
         attachMembers();
         attachAdminConfig();
@@ -991,17 +972,6 @@
           usernameReady = false;
           verifyAccountUsername(user);
         }
-      } else if (user) {
-        if (postsRef) { postsRef.off("value"); postsRef = null; }
-        if (membersRef) { membersRef.off("value"); membersRef = null; }
-        if (reportsRef) { reportsRef.off("value"); reportsRef = null; }
-        if (adminConfigRef) { adminConfigRef.off("value"); adminConfigRef = null; }
-        adminUid = null;
-        usernameReady = false;
-        reports = {};
-        allPosts = [];
-        members = {};
-        showToast("Your 90-day guest period has ended. Create an account to continue.");
       } else {
         if (postsRef) { postsRef.off("value"); postsRef = null; }
         if (membersRef) { membersRef.off("value"); membersRef = null; }
